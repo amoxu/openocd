@@ -23,6 +23,16 @@
 extern const struct flash_driver aduc702x_flash;
 extern const struct flash_driver aducm360_flash;
 extern const struct flash_driver ambiqmicro_flash;
+extern const struct flash_driver at32f403axx_flash;
+extern const struct flash_driver at32f403xx_flash;
+extern const struct flash_driver at32f407xx_flash;
+extern const struct flash_driver at32f413xx_flash;
+extern const struct flash_driver at32f415xx_flash;
+extern const struct flash_driver at32f421xx_flash;
+extern const struct flash_driver at32f425xx_flash;
+extern const struct flash_driver at32f435xx_flash;
+extern const struct flash_driver at32f437xx_flash;
+extern const struct flash_driver at32wb415xx_flash;
 extern const struct flash_driver at91sam3_flash;
 extern const struct flash_driver at91sam4_flash;
 extern const struct flash_driver at91sam4l_flash;
@@ -96,6 +106,16 @@ static const struct flash_driver * const flash_drivers[] = {
 	&aduc702x_flash,
 	&aducm360_flash,
 	&ambiqmicro_flash,
+	&at32f403axx_flash,
+	&at32f403xx_flash,
+	&at32f407xx_flash,
+	&at32f413xx_flash,
+	&at32f415xx_flash,
+	&at32f421xx_flash,
+	&at32f425xx_flash,
+	&at32f435xx_flash,
+	&at32f437xx_flash,
+	&at32wb415xx_flash,
 	&at91sam3_flash,
 	&at91sam4_flash,
 	&at91sam4l_flash,
