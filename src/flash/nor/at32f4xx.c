@@ -966,7 +966,7 @@ static int get_at32wb415_info(struct flash_bank *bank, char *buf, int buf_size)
 }
 #endif
 
-static int get_at32fx_info(struct flash_bank *bank, struct command_invocation *cmd)
+static int get_at32fx_info(struct flash_bank *bank, char *buf, int buf_size)
 {
 	at32_get_device_info(bank);
 	return ERROR_OK;
