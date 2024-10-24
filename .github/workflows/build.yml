@@ -1,0 +1,348 @@
+# Author: Benedikt Kleiner, Amo Xu
+
+name: Build tool-openocd Binary Pack for Mac & Linux & Windows
+on: push
+jobs:
+  build-mac-applesilicon:
+    runs-on: macos-latest
+    env:
+      BUILD_DIR: build
+    steps:
+      - uses: actions/checkout@v2
+      - name: install deps
+        run: brew install libtool automake texinfo coreutils pkg-config cmake gnu-sed
+      - name: build
+        env:
+          MAKE_JOBS: 2
+        run: |
+          export PATH=/opt/homebrew/bin:$PATH
+          export PATH="/opt/homebrew/opt/gnu-sed/libexec/gnubin:$PATH"
+          export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
+          export CFLAGS=-mmacosx-version-min=10.9
+          export LDFLAGS="-F/System/Library/Frameworks -framework Foundation -framework AppKit -framework IOKit -framework Security"
+
+          export PREFIX="$(realpath $BUILD_DIR)/opt"
+          export BUILD_FOLD="$(realpath $BUILD_DIR)/libs"
+          mkdir -p $PREFIX $BUILD_FOLD
+
+          #LIBUSB1
+          export LIBUSB1_VER=1.0.26
+          git clone https://github.com/libusb/libusb && cd libusb && git checkout tags/v$LIBUSB1_VER -b v$LIBUSB1_VER && ./bootstrap.sh
+          ./configure --prefix="$PREFIX" --disable-shared
+          make install
+
+          #HIDAPI
+          export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
+          export HIDAPI_VER=0.11.2
+          cd $BUILD_FOLD && git clone https://github.com/libusb/hidapi && cd hidapi && git checkout tags/hidapi-$HIDAPI_VER -b $HIDAPI_VER && ./bootstrap 
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DBUILD_SHARED_LIBS=false -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
+          make install
+
+          #LIBFTDI
+          export LIBFTDI_VER=1.5
+          cd $BUILD_FOLD && git clone git://developer.intra2net.com/libftdi && cd libftdi && git checkout tags/v$LIBFTDI_VER -b v$LIBFTDI_VER
+          sed -i "24,39s/^/# /" ./src/CMakeLists.txt 
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 ./
+          make install
+
+          #CAPSTONE
+          export CAPSTONE_VER=4.0.2
+          cd $BUILD_FOLD && git clone https://github.com/capstone-engine/capstone.git && cd capstone && git checkout tags/$CAPSTONE_VER -b $CAPSTONE_VER
+          make install PREFIX="$PREFIX" CAPSTONE_BUILD_CORE_ONLY=yes CAPSTONE_STATIC=yes CAPSTONE_SHARED=no CAPSTONE_ARCHS="arm"
+
+          cd $PREFIX/../..
+          ./bootstrap
+          ./configure --prefix="$PREFIX/openocd" --disable-werror --disable-doxygen-html --with-capstone
+          make 
+          make install-strip
+
+          echo "ARTIFACT_PATH=$PREFIX/openocd" >> $GITHUB_ENV
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: openocd-mac-applesilicon
+          path: ${{ env.ARTIFACT_PATH }}/*
+          
+  build-mac-intel:
+    runs-on: macos-12
+    env:
+      BUILD_DIR: build
+    steps:
+      - uses: actions/checkout@v2
+      - name: install deps
+        run: brew install libtool automake texinfo coreutils pkg-config cmake gnu-sed
+      - name: build
+        env:
+          MAKE_JOBS: 2
+        run: |
+          export PATH=/usr/local/bin:$PATH
+          export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
+          export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+          export CFLAGS=-mmacosx-version-min=10.9
+          export LDFLAGS="-F/System/Library/Frameworks -framework Foundation -framework AppKit -framework IOKit -framework Security"
+
+          export PREFIX="$(realpath $BUILD_DIR)/opt"
+          export BUILD_FOLD="$(realpath $BUILD_DIR)/libs"
+          mkdir -p $PREFIX $BUILD_FOLD
+
+          #LIBUSB1
+          export LIBUSB1_VER=1.0.26
+          git clone https://github.com/libusb/libusb && cd libusb && git checkout tags/v$LIBUSB1_VER -b v$LIBUSB1_VER && ./bootstrap.sh
+          ./configure --prefix="$PREFIX" --disable-shared
+          make install
+
+          #HIDAPI
+          export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
+          export HIDAPI_VER=0.11.2
+          cd $BUILD_FOLD && git clone https://github.com/libusb/hidapi && cd hidapi && git checkout tags/hidapi-$HIDAPI_VER -b $HIDAPI_VER && ./bootstrap 
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DBUILD_SHARED_LIBS=false -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
+          make install
+
+          #LIBFTDI
+          export LIBFTDI_VER=1.5
+          cd $BUILD_FOLD && git clone git://developer.intra2net.com/libftdi && cd libftdi && git checkout tags/v$LIBFTDI_VER -b v$LIBFTDI_VER
+          sed -i "24,39s/^/# /" ./src/CMakeLists.txt 
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 ./
+          make install
+
+          #CAPSTONE
+          export CAPSTONE_VER=4.0.2
+          cd $BUILD_FOLD && git clone https://github.com/capstone-engine/capstone.git && cd capstone && git checkout tags/$CAPSTONE_VER -b $CAPSTONE_VER
+          make install PREFIX="$PREFIX" CAPSTONE_BUILD_CORE_ONLY=yes CAPSTONE_STATIC=yes CAPSTONE_SHARED=no CAPSTONE_ARCHS="arm"
+
+          cd $PREFIX/../..
+          ./bootstrap
+          ./configure --prefix="$PREFIX/openocd" --disable-werror --disable-doxygen-html --with-capstone
+          make 
+          make install-strip
+
+          echo "ARTIFACT_PATH=$PREFIX/openocd" >> $GITHUB_ENV
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: openocd-mac-intel
+          path: ${{ env.ARTIFACT_PATH }}/*
+
+  build-linux:
+    runs-on: ubuntu-20.04
+    env:
+      BUILD_DIR: build
+    steps:
+      - uses: actions/checkout@v2
+      - name: install deps
+        run: sudo apt update && sudo apt install -y git libtool pkg-config autoconf automake libudev-dev build-essential cmake
+      - name: build
+        env:
+          MAKE_JOBS: 2
+        run: |
+          export PREFIX="$(realpath $BUILD_DIR)/opt"
+          export BUILD_FOLD="$(realpath $BUILD_DIR)/libs"
+          mkdir -p $PREFIX $BUILD_FOLD
+
+          #LIBUSB1
+          export LIBUSB1_VER=1.0.26
+          cd $BUILD_FOLD && git clone https://github.com/libusb/libusb && cd libusb && git checkout tags/v$LIBUSB1_VER -b v$LIBUSB1_VER && ./bootstrap.sh
+          ./configure --prefix="$PREFIX" --disable-shared
+          make install
+
+          #HIDAPI
+          export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
+          export HIDAPI_VER=0.11.2
+          cd $BUILD_FOLD && git clone https://github.com/libusb/hidapi && cd hidapi && git checkout tags/hidapi-$HIDAPI_VER -b $HIDAPI_VER && ./bootstrap 
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DBUILD_SHARED_LIBS=false
+          make install
+
+          #LIBFTDI
+          export LIBFTDI_VER=1.5
+          cd $BUILD_FOLD && git clone git://developer.intra2net.com/libftdi && cd libftdi && git checkout tags/v$LIBFTDI_VER -b v$LIBFTDI_VER
+          sed -i "24,39s/^/# /" ./src/CMakeLists.txt 
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF ./
+          make install
+
+          #CAPSTONE
+          export CAPSTONE_VER=4.0.2
+          cd $BUILD_FOLD && git clone https://github.com/capstone-engine/capstone.git && cd capstone && git checkout tags/$CAPSTONE_VER -b $CAPSTONE_VER
+          make install PREFIX="$PREFIX" CAPSTONE_BUILD_CORE_ONLY=yes CAPSTONE_STATIC=yes CAPSTONE_SHARED=no CAPSTONE_ARCHS="arm"
+
+
+          cd $PREFIX/../..
+          ./bootstrap
+          ./configure --prefix="$PREFIX/openocd" --disable-werror --disable-doxygen-html --with-capstone
+          make 
+          make install-strip
+
+          echo "ARTIFACT_PATH=$PREFIX/openocd" >> $GITHUB_ENV
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: openocd-linux
+          path: ${{ env.ARTIFACT_PATH }}/*
+
+  build-windows-x86:
+    runs-on: ubuntu-20.04
+    env:
+      BUILD_DIR: build
+    steps:
+      - uses: actions/checkout@v2
+      - name: install deps
+        run: sudo apt update && sudo apt install -y git autoconf automake libtool-bin build-essential cmake libudev-dev pkg-config autotools-dev gcc-mingw-w64-i686
+      - name: Bootstrap
+        run: ./bootstrap
+      - name: Prepare libusb1
+        env:
+          LIBUSB1_VER: 1.0.26
+        run: |
+          git clone https://github.com/libusb/libusb && cd libusb && git checkout tags/v$LIBUSB1_VER -b v$LIBUSB1_VER && ./bootstrap.sh
+          echo "LIBUSB1_SRC=$PWD" >> $GITHUB_ENV
+      - name: Prepare hidapi
+        env:
+          HIDAPI_VER: 0.11.2
+        run: |
+          git clone https://github.com/libusb/hidapi && cd hidapi && git checkout tags/hidapi-$HIDAPI_VER -b $HIDAPI_VER && ./bootstrap 
+          echo "HIDAPI_SRC=$PWD" >> $GITHUB_ENV
+      - name: Prepare libftdi
+        env:
+          LIBFTDI_VER: 1.5
+        run: |
+          git clone git://developer.intra2net.com/libftdi && cd libftdi && git checkout tags/v$LIBFTDI_VER -b v$LIBFTDI_VER
+          sed -i "24,39s/^/# /" ./src/CMakeLists.txt 
+          echo "LIBFTDI_SRC=$PWD" >> $GITHUB_ENV
+      - name: Prepare capstone
+        env:
+          CAPSTONE_VER: 4.0.2
+        run: |
+          git clone https://github.com/capstone-engine/capstone.git && cd capstone && git checkout tags/$CAPSTONE_VER -b $CAPSTONE_VER
+          echo "CAPSTONE_SRC=$PWD" >> $GITHUB_ENV
+      - name: Package OpenOCD for windows
+        env:
+          MAKE_JOBS: 2
+          HOST: i686-w64-mingw32
+          LIBUSB1_CONFIG: '--disable-shared --enable-static'
+          HIDAPI_CONFIG: '--disable-shared --enable-static --disable-testgui'
+          LIBFTDI_CONFIG: '-DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF'
+          CAPSTONE_CONFIG: 'CAPSTONE_BUILD_CORE_ONLY=yes CAPSTONE_STATIC=yes CAPSTONE_SHARED=no CAPSTONE_ARCHS="arm"'
+        run: |
+          # set env and call cross-build.sh
+          export OPENOCD_TAG="`git rev-parse --short HEAD`"
+          export OPENOCD_SRC=$PWD
+          export OPENOCD_CONFIG="--disable-werror --disable-doxygen-html --with-capstone"
+          sed -i "150,158s/^/# /" $OPENOCD_SRC/contrib/cross-build.sh
+
+          mkdir -p $BUILD_DIR && cd $BUILD_DIR
+          bash $OPENOCD_SRC/contrib/cross-build.sh $HOST
+
+          cd $HOST-root/usr
+          echo "ARTIFACT_PATH=$PWD" >> $GITHUB_ENV
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: openocd-windows-x86
+          path: ${{ env.ARTIFACT_PATH }}/*
+
+  build-windows-x64:
+    runs-on: ubuntu-20.04
+    env:
+      BUILD_DIR: build
+    steps:
+      - uses: actions/checkout@v2
+      - name: install deps
+        run: sudo apt update && sudo apt install -y git autoconf automake libtool-bin build-essential cmake libudev-dev pkg-config autotools-dev gcc-mingw-w64-x86-64
+      - name: Bootstrap
+        run: ./bootstrap
+      - name: Prepare libusb1
+        env:
+          LIBUSB1_VER: 1.0.26
+        run: |
+          git clone https://github.com/libusb/libusb && cd libusb && git checkout tags/v$LIBUSB1_VER -b v$LIBUSB1_VER && ./bootstrap.sh
+          echo "LIBUSB1_SRC=$PWD" >> $GITHUB_ENV
+      - name: Prepare hidapi
+        env:
+          HIDAPI_VER: 0.11.2
+        run: |
+          git clone https://github.com/libusb/hidapi && cd hidapi && git checkout tags/hidapi-$HIDAPI_VER -b $HIDAPI_VER && ./bootstrap 
+          echo "HIDAPI_SRC=$PWD" >> $GITHUB_ENV
+      - name: Prepare libftdi
+        env:
+          LIBFTDI_VER: 1.5
+        run: |
+          git clone git://developer.intra2net.com/libftdi && cd libftdi && git checkout tags/v$LIBFTDI_VER -b v$LIBFTDI_VER
+          sed -i "24,39s/^/# /" ./src/CMakeLists.txt 
+          echo "LIBFTDI_SRC=$PWD" >> $GITHUB_ENV
+      - name: Prepare capstone
+        env:
+          CAPSTONE_VER: 4.0.2
+        run: |
+          git clone https://github.com/capstone-engine/capstone.git && cd capstone && git checkout tags/$CAPSTONE_VER -b $CAPSTONE_VER
+          echo "CAPSTONE_SRC=$PWD" >> $GITHUB_ENV
+      - name: Package OpenOCD for windows
+        env:
+          MAKE_JOBS: 2
+          HOST: x86_64-w64-mingw32
+          LIBUSB1_CONFIG: '--disable-shared --enable-static'
+          HIDAPI_CONFIG: '--disable-shared --enable-static --disable-testgui'
+          LIBFTDI_CONFIG: '-DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF'
+          CAPSTONE_CONFIG: 'CAPSTONE_BUILD_CORE_ONLY=yes CAPSTONE_STATIC=yes CAPSTONE_SHARED=no CAPSTONE_ARCHS="arm"'
+        run: |
+          # set env and call cross-build.sh
+          export OPENOCD_TAG="`git rev-parse --short HEAD`"
+          export OPENOCD_SRC=$PWD
+          export OPENOCD_CONFIG="--disable-werror --disable-doxygen-html --with-capstone"
+          sed -i "150,158s/^/# /" $OPENOCD_SRC/contrib/cross-build.sh
+
+          mkdir -p $BUILD_DIR && cd $BUILD_DIR
+          bash $OPENOCD_SRC/contrib/cross-build.sh $HOST
+
+          cd $HOST-root/usr
+          echo "ARTIFACT_PATH=$PWD" >> $GITHUB_ENV
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: openocd-windows-x64
+          path: ${{ env.ARTIFACT_PATH }}/*
+          
+  pack:
+    runs-on: ubuntu-latest
+    needs:
+      - build-mac-applesilicon
+      - build-mac-intel
+      - build-linux
+      - build-windows-x86
+      - build-windows-x64
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: build
+
+      - name: Generate xpack
+        run: |
+          mkdir output && cd output
+          echo "$PWD"
+          
+          mkdir bin-darwin_x86_64
+          cp -rv ../build/openocd-mac-intel/bin/* bin-darwin_x86_64
+          
+          mkdir bin-darwin_arm64
+          cp -rv ../build/openocd-mac-applesilicon/bin/* bin-darwin_arm64
+
+          mkdir bin-windows_amd64
+          cp -rv ../build/openocd-windows-x64/bin/*.exe bin-windows_amd64
+
+          mkdir bin-windows_x86
+          cp -rv ../build/openocd-windows-x86/bin/*.exe bin-windows_x86
+
+          mkdir bin-linux_x86_64
+          cp -rv ../build/openocd-linux/bin/* bin-linux_x86_64
+          cp -rv ../build/openocd-linux/share/openocd/contrib contrib
+          cp -rv ../build/openocd-linux/share/openocd/scripts scripts
+
+      - name: Upload xpack
+        uses: actions/upload-artifact@v3
+        with:
+          name: xpack
+          path: output/*
