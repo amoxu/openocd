@@ -1,7 +1,8 @@
 # Author: Benedikt Kleiner, Amo Xu
 
 name: Build OpenOCD Mac & Linux & Windows
-on: push
+on:
+  workflow_dispatch:
 jobs:
   build-mac-applesilicon:
     runs-on: macos-latest
