@@ -42,7 +42,7 @@ jobs:
           export LIBFTDI_VER=1.5
           cd $BUILD_FOLD && git clone git://developer.intra2net.com/libftdi && cd libftdi && git checkout tags/v$LIBFTDI_VER -b v$LIBFTDI_VER
           sed -i "24,39s/^/# /" ./src/CMakeLists.txt 
-          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 ./
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ./
           make install
 
           #CAPSTONE
@@ -103,7 +103,7 @@ jobs:
           export LIBFTDI_VER=1.5
           cd $BUILD_FOLD && git clone git://developer.intra2net.com/libftdi && cd libftdi && git checkout tags/v$LIBFTDI_VER -b v$LIBFTDI_VER
           sed -i "24,39s/^/# /" ./src/CMakeLists.txt 
-          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 ./
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ./
           make install
 
           #CAPSTONE
@@ -159,7 +159,7 @@ jobs:
           export LIBFTDI_VER=1.5
           cd $BUILD_FOLD && git clone git://developer.intra2net.com/libftdi && cd libftdi && git checkout tags/v$LIBFTDI_VER -b v$LIBFTDI_VER
           sed -i "24,39s/^/# /" ./src/CMakeLists.txt 
-          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF ./
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ./
           make install
 
           #CAPSTONE
