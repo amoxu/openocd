@@ -220,9 +220,19 @@ jobs:
 
           #HIDAPI
           export HIDAPI_VER=0.11.2
-          cd $BUILD_FOLD && git clone https://github.com/libusb/hidapi && cd hidapi && git checkout tags/hidapi-$HIDAPI_VER -b $HIDAPI_VER && ./bootstrap
-          ./configure --host=$CROSS_HOST --prefix="$PREFIX" --disable-shared --disable-testgui
-          make install
+          cd $BUILD_FOLD && git clone https://github.com/libusb/hidapi && cd hidapi && git checkout tags/hidapi-$HIDAPI_VER -b $HIDAPI_VER
+          cmake -B build \
+            -DCMAKE_INSTALL_PREFIX="$PREFIX" \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DHIDAPI_INSTALL_TARGETS=ON \
+            -DHIDAPI_BUILD_HIDTEST=OFF \
+            -DHIDAPI_WITH_HIDRAW=OFF \
+            -DHIDAPI_WITH_LIBUSB=ON \
+            -DCMAKE_SYSTEM_NAME=Linux \
+            -DCMAKE_C_COMPILER=${CC} -DCMAKE_CXX_COMPILER=${CXX} \
+            -DPKG_CONFIG_EXECUTABLE=$(which pkg-config) \
+            .
+          cmake --build build --target install
 
           #LIBFTDI
           export LIBFTDI_VER=1.5
@@ -287,9 +297,19 @@ jobs:
 
           #HIDAPI
           export HIDAPI_VER=0.11.2
-          cd $BUILD_FOLD && git clone https://github.com/libusb/hidapi && cd hidapi && git checkout tags/hidapi-$HIDAPI_VER -b $HIDAPI_VER && ./bootstrap
-          ./configure --host=$CROSS_HOST --prefix="$PREFIX" --disable-shared --disable-testgui
-          make install
+          cd $BUILD_FOLD && git clone https://github.com/libusb/hidapi && cd hidapi && git checkout tags/hidapi-$HIDAPI_VER -b $HIDAPI_VER
+          cmake -B build \
+            -DCMAKE_INSTALL_PREFIX="$PREFIX" \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DHIDAPI_INSTALL_TARGETS=ON \
+            -DHIDAPI_BUILD_HIDTEST=OFF \
+            -DHIDAPI_WITH_HIDRAW=OFF \
+            -DHIDAPI_WITH_LIBUSB=ON \
+            -DCMAKE_SYSTEM_NAME=Linux \
+            -DCMAKE_C_COMPILER=${CC} -DCMAKE_CXX_COMPILER=${CXX} \
+            -DPKG_CONFIG_EXECUTABLE=$(which pkg-config) \
+            .
+          cmake --build build --target install
 
           #LIBFTDI
           export LIBFTDI_VER=1.5
