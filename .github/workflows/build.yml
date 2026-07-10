@@ -35,7 +35,7 @@ jobs:
           export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
           export HIDAPI_VER=0.11.2
           cd $BUILD_FOLD && git clone https://github.com/libusb/hidapi && cd hidapi && git checkout tags/hidapi-$HIDAPI_VER -b $HIDAPI_VER && ./bootstrap 
-          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DBUILD_SHARED_LIBS=false -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DBUILD_SHARED_LIBS=false -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 -DCMAKE_POLICY_VERSION_MINIMUM=3.5 .
           make install
 
           #LIBFTDI
@@ -96,7 +96,7 @@ jobs:
           export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
           export HIDAPI_VER=0.11.2
           cd $BUILD_FOLD && git clone https://github.com/libusb/hidapi && cd hidapi && git checkout tags/hidapi-$HIDAPI_VER -b $HIDAPI_VER && ./bootstrap 
-          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DBUILD_SHARED_LIBS=false -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DBUILD_SHARED_LIBS=false -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 -DCMAKE_POLICY_VERSION_MINIMUM=3.5 .
           make install
 
           #LIBFTDI
@@ -152,7 +152,7 @@ jobs:
           export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
           export HIDAPI_VER=0.11.2
           cd $BUILD_FOLD && git clone https://github.com/libusb/hidapi && cd hidapi && git checkout tags/hidapi-$HIDAPI_VER -b $HIDAPI_VER && ./bootstrap 
-          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DBUILD_SHARED_LIBS=false
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DBUILD_SHARED_LIBS=false -DCMAKE_POLICY_VERSION_MINIMUM=3.5 .
           make install
 
           #LIBFTDI
