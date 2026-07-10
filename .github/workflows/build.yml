@@ -92,7 +92,7 @@ jobs:
           #LIBUSB1
           export LIBUSB1_VER=1.0.26
           git clone https://github.com/libusb/libusb && cd libusb && git checkout tags/v$LIBUSB1_VER -b v$LIBUSB1_VER && ./bootstrap.sh
-          ./configure --host=x86_64-apple-darwin --prefix="$PREFIX" --disable-shared
+          ./configure --prefix="$PREFIX" --disable-shared
           make install
 
           #HIDAPI
@@ -120,7 +120,7 @@ jobs:
 
           cd $PREFIX/../..
           ./bootstrap
-          ./configure --host=x86_64-apple-darwin --prefix="$PREFIX/openocd" --disable-werror --disable-doxygen-html --with-capstone
+          ./configure --prefix="$PREFIX/openocd" --disable-werror --disable-doxygen-html --with-capstone
           make 
           make install-strip
 
