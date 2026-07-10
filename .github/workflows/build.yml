@@ -1,7 +1,8 @@
 # Author: Benedikt Kleiner, Amo Xu
 
 name: Build OpenOCD Mac & Linux & Windows
-on: push
+on:
+  workflow_dispatch:
 jobs:
   build-mac-applesilicon:
     runs-on: macos-latest
@@ -35,14 +36,14 @@ jobs:
           export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
           export HIDAPI_VER=0.11.2
           cd $BUILD_FOLD && git clone https://github.com/libusb/hidapi && cd hidapi && git checkout tags/hidapi-$HIDAPI_VER -b $HIDAPI_VER && ./bootstrap 
-          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DBUILD_SHARED_LIBS=false -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DBUILD_SHARED_LIBS=false -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 -DCMAKE_POLICY_VERSION_MINIMUM=3.5 .
           make install
 
           #LIBFTDI
           export LIBFTDI_VER=1.5
           cd $BUILD_FOLD && git clone git://developer.intra2net.com/libftdi && cd libftdi && git checkout tags/v$LIBFTDI_VER -b v$LIBFTDI_VER
           sed -i "24,39s/^/# /" ./src/CMakeLists.txt 
-          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 ./
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9  -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ./
           make install
 
           #CAPSTONE
@@ -65,7 +66,7 @@ jobs:
           path: ${{ env.ARTIFACT_PATH }}/*
           
   build-mac-intel:
-    runs-on: macos-13
+    runs-on: macos-latest
     env:
       BUILD_DIR: build
     steps:
@@ -76,15 +77,19 @@ jobs:
         env:
           MAKE_JOBS: 2
         run: |
-          export PATH=/usr/local/bin:$PATH
-          export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
-          export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
-          export CFLAGS=-mmacosx-version-min=10.9
-          export LDFLAGS="-F/System/Library/Frameworks -framework Foundation -framework AppKit -framework IOKit -framework Security"
+          export PATH=/opt/homebrew/bin:$PATH
+          export PATH="/opt/homebrew/opt/gnu-sed/libexec/gnubin:$PATH"
+          export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
+          export CC=clang
+          export CXX=clang++
+          export CFLAGS="-arch x86_64 -mmacosx-version-min=10.9"
+          export CXXFLAGS="-arch x86_64 -mmacosx-version-min=10.9"
+          export LDFLAGS="-arch x86_64 -F/System/Library/Frameworks -framework Foundation -framework AppKit -framework IOKit -framework Security"
 
           export PREFIX="$(realpath $BUILD_DIR)/opt"
           export BUILD_FOLD="$(realpath $BUILD_DIR)/libs"
           mkdir -p $PREFIX $BUILD_FOLD
+          export MACOSX_DEPLOYMENT_TARGET=10.9
 
           #LIBUSB1
           export LIBUSB1_VER=1.0.26
@@ -96,14 +101,18 @@ jobs:
           export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
           export HIDAPI_VER=0.11.2
           cd $BUILD_FOLD && git clone https://github.com/libusb/hidapi && cd hidapi && git checkout tags/hidapi-$HIDAPI_VER -b $HIDAPI_VER && ./bootstrap 
-          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DBUILD_SHARED_LIBS=false -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DBUILD_SHARED_LIBS=false \
+            -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 .
           make install
 
           #LIBFTDI
           export LIBFTDI_VER=1.5
           cd $BUILD_FOLD && git clone git://developer.intra2net.com/libftdi && cd libftdi && git checkout tags/v$LIBFTDI_VER -b v$LIBFTDI_VER
           sed -i "24,39s/^/# /" ./src/CMakeLists.txt 
-          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 ./
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF \
+            -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ./
           make install
 
           #CAPSTONE
@@ -127,7 +136,7 @@ jobs:
 
 
   build-linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       BUILD_DIR: build
     steps:
@@ -152,14 +161,14 @@ jobs:
           export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
           export HIDAPI_VER=0.11.2
           cd $BUILD_FOLD && git clone https://github.com/libusb/hidapi && cd hidapi && git checkout tags/hidapi-$HIDAPI_VER -b $HIDAPI_VER && ./bootstrap 
-          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DBUILD_SHARED_LIBS=false
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DBUILD_SHARED_LIBS=false -DCMAKE_POLICY_VERSION_MINIMUM=3.5 .
           make install
 
           #LIBFTDI
           export LIBFTDI_VER=1.5
           cd $BUILD_FOLD && git clone git://developer.intra2net.com/libftdi && cd libftdi && git checkout tags/v$LIBFTDI_VER -b v$LIBFTDI_VER
           sed -i "24,39s/^/# /" ./src/CMakeLists.txt 
-          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF ./
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF  -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ./
           make install
 
           #CAPSTONE
@@ -182,8 +191,162 @@ jobs:
           name: openocd-linux
           path: ${{ env.ARTIFACT_PATH }}/*
 
+  build-sbc-aarch64:
+    runs-on: ubuntu-latest
+    env:
+      BUILD_DIR: build
+    steps:
+      - uses: actions/checkout@v2
+      - name: install deps
+        run: sudo apt update && sudo apt install -y git libtool pkg-config autoconf automake libudev-dev build-essential cmake gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+      - name: build
+        env:
+          MAKE_JOBS: 2
+          CROSS_HOST: aarch64-linux-gnu
+        run: |
+          export PREFIX="$(realpath $BUILD_DIR)/opt"
+          export BUILD_FOLD="$(realpath $BUILD_DIR)/libs"
+          mkdir -p $PREFIX $BUILD_FOLD
+
+          export CC=${CROSS_HOST}-gcc
+          export CXX=${CROSS_HOST}-g++
+          export AR=${CROSS_HOST}-ar
+          export RANLIB=${CROSS_HOST}-ranlib
+          export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
+
+          #LIBUSB1
+          export LIBUSB1_VER=1.0.26
+          cd $BUILD_FOLD && git clone https://github.com/libusb/libusb && cd libusb && git checkout tags/v$LIBUSB1_VER -b v$LIBUSB1_VER && ./bootstrap.sh
+          ./configure --host=$CROSS_HOST --prefix="$PREFIX" --disable-shared --disable-udev
+          make install
+
+          #HIDAPI
+          export HIDAPI_VER=0.11.2
+          cd $BUILD_FOLD && git clone https://github.com/libusb/hidapi && cd hidapi && git checkout tags/hidapi-$HIDAPI_VER -b $HIDAPI_VER && ./bootstrap
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DHIDAPI_INSTALL_TARGETS=ON \
+            -DHIDAPI_BUILD_HIDTEST=OFF \
+            -DHIDAPI_WITH_HIDRAW=OFF \
+            -DHIDAPI_WITH_LIBUSB=ON \
+            -DCMAKE_SYSTEM_NAME=Linux \
+            -DCMAKE_C_COMPILER=${CC} -DCMAKE_CXX_COMPILER=${CXX} \
+            -DPKG_CONFIG_EXECUTABLE=$(which pkg-config) \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            .
+          make install
+
+          #LIBFTDI
+          export LIBFTDI_VER=1.5
+          cd $BUILD_FOLD && git clone git://developer.intra2net.com/libftdi && cd libftdi && git checkout tags/v$LIBFTDI_VER -b v$LIBFTDI_VER
+          sed -i "24,39s/^/# /" ./src/CMakeLists.txt
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" \
+            -DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF \
+            -DCMAKE_SYSTEM_NAME=Linux \
+            -DCMAKE_C_COMPILER=${CC} -DCMAKE_CXX_COMPILER=${CXX} \
+            -DPKG_CONFIG_EXECUTABLE=$(which pkg-config) \
+            .
+          make install
+
+          #CAPSTONE
+          export CAPSTONE_VER=4.0.2
+          cd $BUILD_FOLD && git clone https://github.com/capstone-engine/capstone.git && cd capstone && git checkout tags/$CAPSTONE_VER -b $CAPSTONE_VER
+          make install PREFIX="$PREFIX" CROSS="${CROSS_HOST}-" \
+            CAPSTONE_BUILD_CORE_ONLY=yes CAPSTONE_STATIC=yes CAPSTONE_SHARED=no CAPSTONE_ARCHS="arm"
+
+          cd $PREFIX/../..
+          ./bootstrap
+          ./configure --host=$CROSS_HOST --prefix="$PREFIX/openocd" --disable-werror --disable-doxygen-html --with-capstone --disable-udev
+          make
+          make install-strip
+
+          echo "ARTIFACT_PATH=$PREFIX/openocd" >> $GITHUB_ENV
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openocd-sbc-aarch64
+          path: ${{ env.ARTIFACT_PATH }}/*
+
+  build-sbc-armhf:
+    runs-on: ubuntu-latest
+    env:
+      BUILD_DIR: build
+    steps:
+      - uses: actions/checkout@v2
+      - name: install deps
+        run: sudo apt update && sudo apt install -y git libtool pkg-config autoconf automake libudev-dev build-essential cmake gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+      - name: build
+        env:
+          MAKE_JOBS: 2
+          CROSS_HOST: arm-linux-gnueabihf
+        run: |
+          export PREFIX="$(realpath $BUILD_DIR)/opt"
+          export BUILD_FOLD="$(realpath $BUILD_DIR)/libs"
+          mkdir -p $PREFIX $BUILD_FOLD
+
+          export CC=${CROSS_HOST}-gcc
+          export CXX=${CROSS_HOST}-g++
+          export AR=${CROSS_HOST}-ar
+          export RANLIB=${CROSS_HOST}-ranlib
+          export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
+
+          #LIBUSB1
+          export LIBUSB1_VER=1.0.26
+          cd $BUILD_FOLD && git clone https://github.com/libusb/libusb && cd libusb && git checkout tags/v$LIBUSB1_VER -b v$LIBUSB1_VER && ./bootstrap.sh
+          ./configure --host=$CROSS_HOST --prefix="$PREFIX" --disable-shared --disable-udev
+          make install
+
+          #HIDAPI
+          export HIDAPI_VER=0.11.2
+          cd $BUILD_FOLD && git clone https://github.com/libusb/hidapi && cd hidapi && git checkout tags/hidapi-$HIDAPI_VER -b $HIDAPI_VER && ./bootstrap
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DHIDAPI_INSTALL_TARGETS=ON \
+            -DHIDAPI_BUILD_HIDTEST=OFF \
+            -DHIDAPI_WITH_HIDRAW=OFF \
+            -DHIDAPI_WITH_LIBUSB=ON \
+            -DCMAKE_SYSTEM_NAME=Linux \
+            -DCMAKE_C_COMPILER=${CC} -DCMAKE_CXX_COMPILER=${CXX} \
+            -DPKG_CONFIG_EXECUTABLE=$(which pkg-config) \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            .
+          make install
+
+          #LIBFTDI
+          export LIBFTDI_VER=1.5
+          cd $BUILD_FOLD && git clone git://developer.intra2net.com/libftdi && cd libftdi && git checkout tags/v$LIBFTDI_VER -b v$LIBFTDI_VER
+          sed -i "24,39s/^/# /" ./src/CMakeLists.txt
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" \
+            -DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF \
+            -DCMAKE_SYSTEM_NAME=Linux \
+            -DCMAKE_C_COMPILER=${CC} -DCMAKE_CXX_COMPILER=${CXX} \
+            -DPKG_CONFIG_EXECUTABLE=$(which pkg-config) \
+            .
+          make install
+
+          #CAPSTONE
+          export CAPSTONE_VER=4.0.2
+          cd $BUILD_FOLD && git clone https://github.com/capstone-engine/capstone.git && cd capstone && git checkout tags/$CAPSTONE_VER -b $CAPSTONE_VER
+          make install PREFIX="$PREFIX" CROSS="${CROSS_HOST}-" \
+            CAPSTONE_BUILD_CORE_ONLY=yes CAPSTONE_STATIC=yes CAPSTONE_SHARED=no CAPSTONE_ARCHS="arm"
+
+          cd $PREFIX/../..
+          ./bootstrap
+          ./configure --host=$CROSS_HOST --prefix="$PREFIX/openocd" --disable-werror --disable-doxygen-html --with-capstone --disable-udev
+          make
+          make install-strip
+
+          echo "ARTIFACT_PATH=$PREFIX/openocd" >> $GITHUB_ENV
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openocd-sbc-armhf
+          path: ${{ env.ARTIFACT_PATH }}/*
+
   build-windows-x86:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       BUILD_DIR: build
     steps:
@@ -245,7 +408,7 @@ jobs:
           path: ${{ env.ARTIFACT_PATH }}/*
 
   build-windows-x64:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       BUILD_DIR: build
     steps:
@@ -312,6 +475,8 @@ jobs:
       - build-mac-applesilicon
       - build-mac-intel
       - build-linux
+      - build-sbc-aarch64
+      - build-sbc-armhf
       - build-windows-x86
       - build-windows-x64
     steps:
@@ -339,6 +504,13 @@ jobs:
 
           mkdir bin-linux_x86_64
           cp -rv ../build/openocd-linux/bin/* bin-linux_x86_64
+
+          mkdir bin-linux_aarch64
+          cp -rv ../build/openocd-sbc-aarch64/bin/* bin-linux_aarch64
+
+          mkdir bin-linux_armv7l
+          cp -rv ../build/openocd-sbc-armhf/bin/* bin-linux_armv7l
+
           cp -rv ../build/openocd-linux/share/openocd/contrib contrib
           cp -rv ../build/openocd-linux/share/openocd/scripts scripts
 
