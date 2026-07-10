@@ -66,7 +66,7 @@ jobs:
           path: ${{ env.ARTIFACT_PATH }}/*
           
   build-mac-intel:
-    runs-on: macos-13
+    runs-on: macos-latest
     env:
       BUILD_DIR: build
     steps:
@@ -77,34 +77,40 @@ jobs:
         env:
           MAKE_JOBS: 2
         run: |
-          export PATH=/usr/local/bin:$PATH
-          export PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
-          export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
-          export CFLAGS=-mmacosx-version-min=10.9
-          export LDFLAGS="-F/System/Library/Frameworks -framework Foundation -framework AppKit -framework IOKit -framework Security"
+          export PATH=/opt/homebrew/bin:$PATH
+          export PATH="/opt/homebrew/opt/gnu-sed/libexec/gnubin:$PATH"
+          export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
+          export CFLAGS="-arch x86_64 -mmacosx-version-min=10.9"
+          export CXXFLAGS="-arch x86_64 -mmacosx-version-min=10.9"
+          export LDFLAGS="-arch x86_64 -F/System/Library/Frameworks -framework Foundation -framework AppKit -framework IOKit -framework Security"
 
           export PREFIX="$(realpath $BUILD_DIR)/opt"
           export BUILD_FOLD="$(realpath $BUILD_DIR)/libs"
           mkdir -p $PREFIX $BUILD_FOLD
+          export MACOSX_DEPLOYMENT_TARGET=10.9
 
           #LIBUSB1
           export LIBUSB1_VER=1.0.26
           git clone https://github.com/libusb/libusb && cd libusb && git checkout tags/v$LIBUSB1_VER -b v$LIBUSB1_VER && ./bootstrap.sh
-          ./configure --prefix="$PREFIX" --disable-shared
+          ./configure --host=x86_64-apple-darwin --prefix="$PREFIX" --disable-shared
           make install
 
           #HIDAPI
           export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
           export HIDAPI_VER=0.11.2
           cd $BUILD_FOLD && git clone https://github.com/libusb/hidapi && cd hidapi && git checkout tags/hidapi-$HIDAPI_VER -b $HIDAPI_VER && ./bootstrap 
-          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DBUILD_SHARED_LIBS=false -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 -DCMAKE_POLICY_VERSION_MINIMUM=3.5 .
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DBUILD_SHARED_LIBS=false \
+            -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 .
           make install
 
           #LIBFTDI
           export LIBFTDI_VER=1.5
           cd $BUILD_FOLD && git clone git://developer.intra2net.com/libftdi && cd libftdi && git checkout tags/v$LIBFTDI_VER -b v$LIBFTDI_VER
           sed -i "24,39s/^/# /" ./src/CMakeLists.txt 
-          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9  -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ./
+          cmake -DCMAKE_INSTALL_PREFIX="$PREFIX" -DSTATICLIBS=ON -DEXAMPLES=OFF -DFTDI_EEPROM=OFF \
+            -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ./
           make install
 
           #CAPSTONE
@@ -114,7 +120,7 @@ jobs:
 
           cd $PREFIX/../..
           ./bootstrap
-          ./configure --prefix="$PREFIX/openocd" --disable-werror --disable-doxygen-html --with-capstone
+          ./configure --host=x86_64-apple-darwin --prefix="$PREFIX/openocd" --disable-werror --disable-doxygen-html --with-capstone
           make 
           make install-strip
 
@@ -128,7 +134,7 @@ jobs:
 
 
   build-linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       BUILD_DIR: build
     steps:
@@ -184,7 +190,7 @@ jobs:
           path: ${{ env.ARTIFACT_PATH }}/*
 
   build-sbc-aarch64:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       BUILD_DIR: build
     steps:
@@ -251,7 +257,7 @@ jobs:
           path: ${{ env.ARTIFACT_PATH }}/*
 
   build-sbc-armhf:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       BUILD_DIR: build
     steps:
@@ -318,7 +324,7 @@ jobs:
           path: ${{ env.ARTIFACT_PATH }}/*
 
   build-windows-x86:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       BUILD_DIR: build
     steps:
@@ -380,7 +386,7 @@ jobs:
           path: ${{ env.ARTIFACT_PATH }}/*
 
   build-windows-x64:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       BUILD_DIR: build
     steps:
